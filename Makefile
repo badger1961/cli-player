@@ -9,16 +9,16 @@ endif
 all: build test
  
 build:
-    go build -o ${APP_BINARY_PATH} ./...
+	go build -o ./bin/ ./...
 
 test:
-    go test -v ./...
+	go test -v ./...
  
 run:
-    go build -o ${APP_BINARY_PATH} main.go
-    ./${APP_BINARY_PATH}
+	go build -o ${APP_BINARY_PATH} main.go
+	./${APP_BINARY_PATH}
  
  .PHONY: clean
 clean:
-    go clean
-    $(RM) ${APP_BINARY_PATH} 
+	go clean
+	$(RM) ${APP_BINARY_PATH}
