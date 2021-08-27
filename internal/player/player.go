@@ -8,6 +8,8 @@ import (
 	"github.com/faiface/beep/mp3"
 	"github.com/faiface/beep/speaker"
 	"github.com/faiface/beep/wav"
+	"github.com/faiface/beep/flac"
+	"github.com/faiface/beep/vorbis"
 	"gitlab.com/aag031/cli_player/internal/common"
 	"os"
 	"path/filepath"
@@ -19,13 +21,14 @@ const (
 	COMMENT = "#"
 )
 
-type TPlayFileFunc func(string) error
-var controlTable  map[string]TPlayFileFunc
+type TDecodeFileFunc func(*os.File) (beep.StreamSeekCloser, beep.Format, error)
+var controlTable  map[string]TDecodeFileFunc
 
 func init() {
-	controlTable = make(map[string]TPlayFileFunc)
-	controlTable[".mp3"] = playMp3File
-	controlTable[".wav"] = playWavFile
+	controlTable = make(map[string]TDecodeFileFunc)
+	controlTable[".mp3"] = decodeMp3Composition
+	controlTable[".wav"] = decodeWavComposition
+	controlTable[".flac"] = decodeFlacComposition
 }
 
 func PlayPlayList(playListName string) error {
@@ -76,8 +79,21 @@ func PlayFile (fileName string) error {
 	if len (extension) == 0 {
 		return errors.New("Hmm ... No extension for file")
 	}
-	if playFileFuncPtr, ok := controlTable[extension]; ok {
-		playFileFuncPtr(fileName)
+
+	fileHandle, error := os.Open(fileName)
+    common.CheckErrorPanic(error)
+
+	if decodeFileFuncPtr, ok := controlTable[extension]; ok {
+		streamHandler, format, error := decodeFileFuncPtr(fileHandle)
+		common.CheckErrorPanic(error)
+		defer streamHandler.Close()
+        speaker.Init(format.SampleRate, format.SampleRate.N(time.Second/30))
+        done := make(chan bool)
+        speaker.Play(beep.Seq(streamHandler, beep.Callback(func() {
+        	done <-true
+        })))
+        <-done
+        return nil
 	} else {
 		return errors.New("Hmm ... " + extension + " is not supported ")
 	}
@@ -85,38 +101,26 @@ func PlayFile (fileName string) error {
 	return nil
 }
 
-func playWavFile(fileName string) error {
-	fileHandle, error := os.Open(fileName)
+func decodeMp3Composition(fileHandle *os.File)  (beep.StreamSeekCloser, beep.Format, error)  {
+    streamHandler, format, error := mp3.Decode(fileHandle)
 	common.CheckErrorPanic(error)
-
-	streamHandler, format, error := wav.Decode(fileHandle)
-	common.CheckErrorPanic(error)
-	defer streamHandler.Close()
-	speaker.Init(format.SampleRate, format.SampleRate.N(time.Second/30))
-	done := make(chan bool)
-	speaker.Play(beep.Seq(streamHandler, beep.Callback(func() {
-		done <-true
-	})))
-	<-done
-	return nil
+	return streamHandler, format, error
 }
 
-func playMp3File(fileName string) error {
-	fileHandle, error := os.Open(fileName)
+func decodeWavComposition(fileHandle *os.File)  (beep.StreamSeekCloser, beep.Format, error)  {
+    streamHandler, format, error := wav.Decode(fileHandle)
 	common.CheckErrorPanic(error)
-
-	streamHandler, format, error := mp3.Decode(fileHandle)
-	common.CheckErrorPanic(error)
-	defer streamHandler.Close()
-	speaker.Init(format.SampleRate, format.SampleRate.N(time.Second/30))
-	done := make(chan bool)
-	speaker.Play(beep.Seq(streamHandler, beep.Callback(func() {
-		done <-true
-	})))
-	<-done
-	return nil
+	return streamHandler, format, error
 }
 
-func decodeComposition(fileName string)  (beep.StreamSeekCloser, beep.Format, error)  {
+func decodeFlacComposition(fileHandle *os.File)  (beep.StreamSeekCloser, beep.Format, error)  {
+    streamHandler, format, error := flac.Decode(fileHandle)
+	common.CheckErrorPanic(error)
+	return streamHandler, format, error
+}
 
+func decodeOggComposition(fileHandle *os.File)  (beep.StreamSeekCloser, beep.Format, error)  {
+    streamHandler, format, error := vorbis.Decode(fileHandle)
+	common.CheckErrorPanic(error)
+	return streamHandler, format, error
 }
