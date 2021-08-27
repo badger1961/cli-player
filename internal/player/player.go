@@ -2,6 +2,7 @@ package player
 
 import (
 	"errors"
+	"fmt"
 	"github.com/faiface/beep"
 	"github.com/faiface/beep/mp3"
 	"github.com/faiface/beep/speaker"
@@ -17,6 +18,25 @@ func init() {
 	controlTable = make(map[string]TPlayFileFunc)
 	controlTable[".mp3"] = playMp3File
 	controlTable[".wav"] = playWavFile
+}
+
+func PlayFolder(folderName string) error {
+	err := filepath.Walk(folderName, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			fmt.Println(err)
+			return err
+		}
+		if info.IsDir() {
+			PlayFolder(path)
+		}
+		fmt.Printf("Play name: %s\n", path)
+ 		errFile := PlayFile(path)
+ 		common.CheckErrorNoPanic(errFile)
+		return nil
+	})
+
+	common.CheckErrorPanic(err)
+	return nil
 }
 
 func PlayFile (fileName string) error {

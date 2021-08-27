@@ -18,3 +18,17 @@ func CheckInputFile(fileName string) error {
 
 	return nil
 }
+
+func CheckInputFolder(fileName string) error {
+	fileInfo, err := os.Stat(fileName)
+
+	if os.IsNotExist(err) {
+		return errors.New("Hmm ... Folder " + fileName + " not found")
+	}
+
+	if !fileInfo.IsDir() {
+		return errors.New("Hmm ... Folder " + fileName + " should be a folder not file")
+	}
+
+	return nil
+}
