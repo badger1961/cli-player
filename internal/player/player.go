@@ -1,6 +1,7 @@
 package player
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
 	"github.com/faiface/beep"
@@ -10,7 +11,13 @@ import (
 	"os"
 	"path/filepath"
 	"time"
+	"strings"
 )
+
+const (
+	COMMENT = "#"
+)
+
 type TPlayFileFunc func(string) error
 var controlTable  map[string]TPlayFileFunc
 
@@ -20,7 +27,29 @@ func init() {
 	controlTable[".wav"] = playWavFile
 }
 
+func PlayPlayList(playListName string) error {
+	fmt.Println("Start Play Compositions from playlist : " + playListName)
+	file, err := os.Open(playListName)
+	common.CheckErrorPanic(err)
+	defer file.Close()
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		fileName := scanner.Text()
+		if strings.HasPrefix(fileName, COMMENT) {
+			continue
+		}
+		PlayFile(fileName)
+	}
+
+	if err := scanner.Err(); err != nil {
+		fmt.Println(err)
+		return err
+	}
+	return nil
+}
+
 func PlayFolder(folderName string) error {
+	fmt.Println("Start Play Compositions from folder : " + folderName)
 	err := filepath.Walk(folderName, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			fmt.Println(err)
@@ -41,11 +70,11 @@ func PlayFolder(folderName string) error {
 }
 
 func PlayFile (fileName string) error {
+	fmt.Println("Start Play Composition : " + fileName)
 	var extension = filepath.Ext(fileName)
 	if len (extension) == 0 {
 		return errors.New("Hmm ... No extension for file")
 	}
-
 	if playFileFuncPtr, ok := controlTable[extension]; ok {
 		playFileFuncPtr(fileName)
 	} else {
