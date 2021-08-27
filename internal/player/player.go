@@ -7,6 +7,7 @@ import (
 	"github.com/faiface/beep"
 	"github.com/faiface/beep/mp3"
 	"github.com/faiface/beep/speaker"
+	"github.com/faiface/beep/wav"
 	"gitlab.com/aag031/cli_player/internal/common"
 	"os"
 	"path/filepath"
@@ -85,7 +86,19 @@ func PlayFile (fileName string) error {
 }
 
 func playWavFile(fileName string) error {
-	return errors.New("Hmm ... WAV not implemented")
+	fileHandle, error := os.Open(fileName)
+	common.CheckErrorPanic(error)
+
+	streamHandler, format, error := wav.Decode(fileHandle)
+	common.CheckErrorPanic(error)
+	defer streamHandler.Close()
+	speaker.Init(format.SampleRate, format.SampleRate.N(time.Second/30))
+	done := make(chan bool)
+	speaker.Play(beep.Seq(streamHandler, beep.Callback(func() {
+		done <-true
+	})))
+	<-done
+	return nil
 }
 
 func playMp3File(fileName string) error {
@@ -102,4 +115,8 @@ func playMp3File(fileName string) error {
 	})))
 	<-done
 	return nil
+}
+
+func decodeComposition(fileName string)  (beep.StreamSeekCloser, beep.Format, error)  {
+
 }
