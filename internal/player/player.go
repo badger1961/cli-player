@@ -27,7 +27,8 @@ func PlayFolder(folderName string) error {
 			return err
 		}
 		if info.IsDir() {
-			PlayFolder(path)
+			fmt.Println("Start folder " + info.Name())
+			return nil
 		}
 		fmt.Printf("Play name: %s\n", path)
  		errFile := PlayFile(path)
