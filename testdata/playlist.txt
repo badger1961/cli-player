@@ -1,0 +1,4 @@
+# Авторская песня
+./testdata/1993/01.mp3
+# ./testdata/1994/01.mp3
+./testdata/1994/01.mp3
