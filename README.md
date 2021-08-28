@@ -24,7 +24,6 @@ OPTIONS:
 
 
 ./testdata/1.mp3
-# ./testdata/1994/01.mp3
 ./testdata/1.flac
 
 Comment is marked by #
