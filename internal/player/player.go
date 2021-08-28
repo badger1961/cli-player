@@ -29,6 +29,7 @@ func init() {
 	controlTable[".mp3"] = decodeMp3Composition
 	controlTable[".wav"] = decodeWavComposition
 	controlTable[".flac"] = decodeFlacComposition
+	controlTable[".ogg"] = decodeOggComposition
 }
 
 func PlayPlayList(playListName string) error {
