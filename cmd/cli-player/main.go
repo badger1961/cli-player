@@ -17,7 +17,7 @@ const (
 	unknownMode
 )
 
-const VERSION = "0.3.0"
+const VERSION = "1.0.0"
 
 func main() {
 	fileName, mode := parseCommandLine()
