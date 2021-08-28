@@ -23,8 +23,9 @@ OPTIONS:
     playlist is text file each line of this file contains path to audio file. For example
 
 
-./testdata/1.mp3
-./testdata/1.flac
+1. ./testdata/1.mp3
+1. ./testdata/1.flac
+
 
 Comment is marked by #
 
