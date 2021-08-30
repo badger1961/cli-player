@@ -75,7 +75,6 @@ func PlayFolder(folderName string) error {
 }
 
 func PlayFile (fileName string) error {
-	fmt.Println("Start Play Composition : " + fileName)
 	var extension = filepath.Ext(fileName)
 	if len (extension) == 0 {
 		return errors.New("Hmm ... No extension for file")
@@ -88,6 +87,8 @@ func PlayFile (fileName string) error {
 		streamHandler, format, error := decodeFileFuncPtr(fileHandle)
 		common.CheckErrorPanic(error)
 		defer streamHandler.Close()
+		size := format.SampleRate.D(streamHandler.Len())
+		fmt.Printf("Start Play Composition : %v duration : %v", fileName, size.Round(time.Second))
         speaker.Init(format.SampleRate, format.SampleRate.N(time.Second/30))
         done := make(chan bool)
         speaker.Play(beep.Seq(streamHandler, beep.Callback(func() {
