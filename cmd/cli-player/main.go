@@ -3,8 +3,11 @@ package main
 import (
 	"fmt"
 	"github.com/DavidGamba/go-getoptions"
+	"github.com/gdamore/tcell/v2"
 	"gitlab.com/aag031/cli_player/internal/common"
 	"gitlab.com/aag031/cli_player/internal/player"
+	"io"
+	"log"
 	"os"
 )
 
@@ -17,14 +20,19 @@ const (
 	unknownMode
 )
 
-const VERSION = "1.1.0"
+const VERSION = "1.2.0"
 
 func main() {
 	fileName, mode := parseCommandLine()
+	logFile, err := os.OpenFile("log.txt", os.O_CREATE | os.O_APPEND | os.O_RDWR, 0666)
+	common.CheckErrorPanic(err)
+	writer := io.MultiWriter(os.Stdout, logFile)
+	log.SetOutput(writer)
+	screen := setupUI()
 	if mode == fileMode {
 		fileError := common.CheckInputFile(fileName)
 		common.CheckErrorPanic(fileError)
-		errorPlayer := player.PlayFile(fileName)
+		errorPlayer := player.PlayFile(fileName, screen)
 		common.CheckErrorPanic(errorPlayer)
 	}
 	if mode == folderMode {
@@ -39,7 +47,6 @@ func main() {
 		errorPlayer := player.PlayPlayList(fileName)
 		common.CheckErrorPanic(errorPlayer)
 	}
-
 }
 
 func parseCommandLine() (string, playMode) {
@@ -86,4 +93,12 @@ func parseCommandLine() (string, playMode) {
 		return playListName, playListMode
 	}
 	return "", unknownMode
+}
+
+func setupUI() tcell.Screen {
+	defStyle := tcell.StyleDefault.Background(tcell.ColorReset).Foreground(tcell.ColorReset)
+	screen,error := tcell.NewScreen()
+	common.CheckErrorPanic(error)
+	screen.SetStyle(defStyle)
+	return screen
 }

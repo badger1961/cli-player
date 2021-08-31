@@ -10,7 +10,9 @@ import (
 	"github.com/faiface/beep/wav"
 	"github.com/faiface/beep/flac"
 	"github.com/faiface/beep/vorbis"
+	"github.com/gdamore/tcell/v2"
 	"gitlab.com/aag031/cli_player/internal/common"
+	"log"
 	"os"
 	"path/filepath"
 	"time"
@@ -43,7 +45,7 @@ func PlayPlayList(playListName string) error {
 		if strings.HasPrefix(fileName, COMMENT) {
 			continue
 		}
-		PlayFile(fileName)
+		PlayFile(fileName, nil)
 	}
 
 	if err := scanner.Err(); err != nil {
@@ -65,7 +67,7 @@ func PlayFolder(folderName string) error {
 			return nil
 		}
 		fmt.Printf("Play name: %s\n", path)
- 		errFile := PlayFile(path)
+ 		errFile := PlayFile(path, nil)
  		common.CheckErrorNoPanic(errFile)
 		return nil
 	})
@@ -74,7 +76,32 @@ func PlayFolder(folderName string) error {
 	return nil
 }
 
-func PlayFile (fileName string) error {
+func playerHook(ctrl   *beep.Ctrl, screen tcell.Screen) {
+	for {
+		time.Sleep(10000)
+		ev := screen.PollEvent()
+		log.Print("event")
+		switch ev := ev.(type) {
+		case *tcell.EventKey:
+			if ev.Key() == tcell.KeyEscape || ev.Key() ==tcell.KeyCtrlC {
+				screen.Fini()
+				os.Exit(0)
+			}
+			if ev.Rune() == 'p' || ev.Rune() =='P' {
+				speaker.Lock()
+				ctrl.Paused = true
+				speaker.Unlock()
+			}
+			if ev.Rune() == 'r' || ev.Rune() =='R' {
+				speaker.Lock()
+				ctrl.Paused = false
+				speaker.Unlock()
+			}
+		}
+	}
+}
+
+func PlayFile (fileName string, screen tcell.Screen) error {
 	var extension = filepath.Ext(fileName)
 	if len (extension) == 0 {
 		return errors.New("Hmm ... No extension for file")
@@ -91,6 +118,8 @@ func PlayFile (fileName string) error {
 		fmt.Printf("Start Play Composition : %v duration : %v", fileName, size.Round(time.Second))
         speaker.Init(format.SampleRate, format.SampleRate.N(time.Second/30))
         done := make(chan bool)
+		ctrl := &beep.Ctrl{Streamer: beep.Loop(-1, streamHandler)}
+        go playerHook(ctrl, screen)
         speaker.Play(beep.Seq(streamHandler, beep.Callback(func() {
         	done <-true
         })))
