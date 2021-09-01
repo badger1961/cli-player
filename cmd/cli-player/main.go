@@ -2,19 +2,18 @@ package main
 
 import (
 	"fmt"
-	"github.com/DavidGamba/go-getoptions"
-	"github.com/gdamore/tcell/v2"
-	"gitlab.com/aag031/cli_player/internal/common"
-	"gitlab.com/aag031/cli_player/internal/player"
-	"io"
 	"log"
 	"os"
+
+	"github.com/DavidGamba/go-getoptions"
+	"gitlab.com/aag031/cli_player/internal/common"
+	"gitlab.com/aag031/cli_player/internal/player"
 )
 
 type playMode int
 
 const (
-	fileMode= playMode(iota)
+	fileMode = playMode(iota)
 	folderMode
 	playListMode
 	unknownMode
@@ -23,16 +22,12 @@ const (
 const VERSION = "1.2.0"
 
 func main() {
+	setupLogging()
 	fileName, mode := parseCommandLine()
-	logFile, err := os.OpenFile("log.txt", os.O_CREATE | os.O_APPEND | os.O_RDWR, 0666)
-	common.CheckErrorPanic(err)
-	writer := io.MultiWriter(os.Stdout, logFile)
-	log.SetOutput(writer)
-	screen := setupUI()
 	if mode == fileMode {
 		fileError := common.CheckInputFile(fileName)
 		common.CheckErrorPanic(fileError)
-		errorPlayer := player.PlayFile(fileName, screen)
+		errorPlayer := player.PlayFile(fileName)
 		common.CheckErrorPanic(errorPlayer)
 	}
 	if mode == folderMode {
@@ -47,6 +42,14 @@ func main() {
 		errorPlayer := player.PlayPlayList(fileName)
 		common.CheckErrorPanic(errorPlayer)
 	}
+}
+
+func setupLogging() {
+	logFile, err := os.OpenFile("./player.log", os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
+	common.CheckErrorPanic(err)
+	defer logFile.Close()
+	log.SetOutput(logFile)
+	log.Println("Log started")
 }
 
 func parseCommandLine() (string, playMode) {
@@ -68,7 +71,7 @@ func parseCommandLine() (string, playMode) {
 		fmt.Printf("Version : " + VERSION)
 		os.Exit(1)
 	}
-	if err  != nil {
+	if err != nil {
 		fmt.Printf("ERROR %s\n\n", err)
 		fmt.Printf(opt.Help(getoptions.HelpSynopsis))
 		os.Exit(1)
@@ -78,7 +81,7 @@ func parseCommandLine() (string, playMode) {
 		fmt.Printf(opt.Help(getoptions.HelpSynopsis))
 		os.Exit(1)
 	}
-	if opt.Called("file") && opt.Called("dir") && opt.Called("plist"){
+	if opt.Called("file") && opt.Called("dir") && opt.Called("plist") {
 		fmt.Printf("ERROR %s\n\n", "fileName and folderName and playlis in the same time should not be passed")
 		fmt.Printf(opt.Help(getoptions.HelpSynopsis))
 		os.Exit(1)
@@ -93,12 +96,4 @@ func parseCommandLine() (string, playMode) {
 		return playListName, playListMode
 	}
 	return "", unknownMode
-}
-
-func setupUI() tcell.Screen {
-	defStyle := tcell.StyleDefault.Background(tcell.ColorReset).Foreground(tcell.ColorReset)
-	screen,error := tcell.NewScreen()
-	common.CheckErrorPanic(error)
-	screen.SetStyle(defStyle)
-	return screen
 }
