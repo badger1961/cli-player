@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/DavidGamba/go-getoptions"
@@ -19,10 +18,9 @@ const (
 	unknownMode
 )
 
-const VERSION = "1.2.0"
+const VERSION = "1.2.1"
 
 func main() {
-	setupLogging()
 	fileName, mode := parseCommandLine()
 	if mode == fileMode {
 		fileError := common.CheckInputFile(fileName)
@@ -42,14 +40,6 @@ func main() {
 		errorPlayer := player.PlayPlayList(fileName)
 		common.CheckErrorPanic(errorPlayer)
 	}
-}
-
-func setupLogging() {
-	logFile, err := os.OpenFile("./player.log", os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
-	common.CheckErrorPanic(err)
-	defer logFile.Close()
-	log.SetOutput(logFile)
-	log.Println("Log started")
 }
 
 func parseCommandLine() (string, playMode) {
