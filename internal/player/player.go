@@ -12,7 +12,6 @@ import (
 	"github.com/eiannone/keyboard"
 	"github.com/faiface/beep"
 
-	// "github.com/faiface/beep/effects"
 	"github.com/faiface/beep/flac"
 	"github.com/faiface/beep/mp3"
 	"github.com/faiface/beep/speaker"
@@ -101,13 +100,11 @@ func PlayFile(fileName string) error {
 	size := format.SampleRate.D(streamHandler.Len())
 	fmt.Printf("Start Play Composition : %v duration : %v", fileName, size.Round(time.Second))
 	speaker.Init(format.SampleRate, format.SampleRate.N(time.Second/30))
-	ctrl := &beep.Ctrl{Streamer: beep.Loop(-1, streamHandler)}
+	ctrl := &beep.Ctrl{Streamer: beep.Loop(1, streamHandler)}
 	ctrl.Paused = false
 	done := make(chan bool, 1)
-	// resampler := beep.ResampleRatio(4, 1, ctrl)
-	// volume := &effects.Volume{Streamer: resampler, Base: 2}
 
-	speaker.Play(beep.Seq(streamHandler, beep.Callback(func() {
+	speaker.Play(beep.Seq(ctrl, beep.Callback(func() {
 		done <- true
 	})))
 
