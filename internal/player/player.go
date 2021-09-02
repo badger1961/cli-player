@@ -4,14 +4,14 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
-	"azul3d.org/engine/keyboard"
+	"github.com/eiannone/keyboard"
 	"github.com/faiface/beep"
+	"github.com/faiface/beep/effects"
 	"github.com/faiface/beep/flac"
 	"github.com/faiface/beep/mp3"
 	"github.com/faiface/beep/speaker"
@@ -94,30 +94,43 @@ func PlayFile(fileName string) error {
 		size := format.SampleRate.D(streamHandler.Len())
 		fmt.Printf("Start Play Composition : %v duration : %v", fileName, size.Round(time.Second))
 		speaker.Init(format.SampleRate, format.SampleRate.N(time.Second/30))
-		done := make(chan bool)
-		//	ctrl := &beep.Ctrl{Streamer: beep.Loop(-1, streamHandler)}
-		watcher := keyboard.NewWatcher()
-		speaker.Play(beep.Seq(streamHandler, beep.Callback(func() {
-			done <- true
-		})))
+		ctrl := &beep.Ctrl{Streamer: beep.Loop(-1, streamHandler)}
+		ctrl.Paused = false
+		resampler := beep.ResampleRatio(4, 1, ctrl)
+		volume := &effects.Volume{Streamer: resampler, Base: 2}
 
-		go func() {
-			for {
-				status := watcher.States()
-				event := status[keyboard.P]
-				if event == keyboard.Down {
-					log.Println("P pressed")
-				}
-			}
+		speaker.Play(volume)
+
+		if err := keyboard.Open(); err != nil {
+			panic(err)
+		}
+		defer func() {
+			_ = keyboard.Close()
 		}()
 
-		<-done
-		return nil
+		keysEvents, err := keyboard.GetKeys(10)
+		if err != nil {
+			panic(err)
+		}
+		for {
+			event := <-keysEvents
+			if event.Err != nil {
+				panic(event.Err)
+			}
+			if event.Key == keyboard.KeyEsc {
+				os.Exit(1)
+			}
+			if event.Key == keyboard.KeySpace {
+				speaker.Lock()
+				ctrl.Paused = !ctrl.Paused
+				speaker.Unlock()
+			}
+		}
+
 	} else {
 		return errors.New("Hmm ... " + extension + " is not supported ")
 	}
 
-	return nil
 }
 
 func decodeMp3Composition(fileHandle *os.File) (beep.StreamSeekCloser, beep.Format, error) {

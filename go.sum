@@ -2,6 +2,8 @@ azul3d.org/engine v0.0.0-20180624221640-25c8eab2d474 h1:HrLWoqa15YkXa5jtwSRy7mEm
 azul3d.org/engine v0.0.0-20180624221640-25c8eab2d474/go.mod h1:3y1cwzJTKvXXop+EAg+AUVfNm3bfHf3djeX+l1UBuUE=
 github.com/DavidGamba/go-getoptions v0.23.0 h1:j8q36PvconcXzKphnnOmmUcKGpcpHfbaAZ/FD0qwdd0=
 github.com/DavidGamba/go-getoptions v0.23.0/go.mod h1:qLaLSYeQ8sUVOfKuu5JT5qKKS3OCwyhkYSJnoG+ggmo=
+github.com/eiannone/keyboard v0.0.0-20200508000154-caf4b762e807 h1:jdjd5e68T4R/j4PWxfZqcKY8KtT9oo8IPNVuV4bSXDQ=
+github.com/eiannone/keyboard v0.0.0-20200508000154-caf4b762e807/go.mod h1:Xoiu5VdKMvbRgHuY7+z64lhu/7lvax/22nzASF6GrO8=
 github.com/faiface/beep v1.0.2 h1:UB5DiRNmA4erfUYnHbgU4UB6DlBOrsdEFRtcc8sCkdQ=
 github.com/faiface/beep v1.0.2/go.mod h1:1yLb5yRdHMsovYYWVqYLioXkVuziCSITW1oarTeduQM=
 github.com/gdamore/encoding v1.0.0 h1:+7OoQ1Bc6eTm5niUzBa0Ctsh6JbMW6Ra+YNuAtDBdko=
