@@ -11,7 +11,8 @@ import (
 
 	"github.com/eiannone/keyboard"
 	"github.com/faiface/beep"
-	"github.com/faiface/beep/effects"
+
+	// "github.com/faiface/beep/effects"
 	"github.com/faiface/beep/flac"
 	"github.com/faiface/beep/mp3"
 	"github.com/faiface/beep/speaker"
@@ -44,10 +45,13 @@ func PlayPlayList(playListName string) error {
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		fileName := scanner.Text()
+		fmt.Println("0 : " + fileName)
 		if strings.HasPrefix(fileName, COMMENT) {
+			fmt.Println("1 : " + fileName)
 			continue
 		}
 		PlayFile(fileName)
+		fmt.Println("2 : " + fileName)
 	}
 
 	if err := scanner.Err(); err != nil {
@@ -96,41 +100,58 @@ func PlayFile(fileName string) error {
 		speaker.Init(format.SampleRate, format.SampleRate.N(time.Second/30))
 		ctrl := &beep.Ctrl{Streamer: beep.Loop(-1, streamHandler)}
 		ctrl.Paused = false
-		resampler := beep.ResampleRatio(4, 1, ctrl)
-		volume := &effects.Volume{Streamer: resampler, Base: 2}
+		done := make(chan bool, 1)
+		// resampler := beep.ResampleRatio(4, 1, ctrl)
+		// volume := &effects.Volume{Streamer: resampler, Base: 2}
 
-		speaker.Play(volume)
+		speaker.Play(beep.Seq(streamHandler, beep.Callback(func() {
+			done <- true
+		})))
 
+		fmt.Println("\n**1**")
 		if err := keyboard.Open(); err != nil {
 			panic(err)
 		}
 		defer func() {
 			_ = keyboard.Close()
 		}()
-
+		fmt.Println("\n**2**")
 		keysEvents, err := keyboard.GetKeys(10)
 		if err != nil {
 			panic(err)
 		}
+		fmt.Println("\n**3**")
+	endPlay:
 		for {
-			event := <-keysEvents
-			if event.Err != nil {
-				panic(event.Err)
-			}
-			if event.Key == keyboard.KeyEsc {
-				os.Exit(1)
-			}
-			if event.Key == keyboard.KeySpace {
-				speaker.Lock()
-				ctrl.Paused = !ctrl.Paused
-				speaker.Unlock()
+			select {
+			case event := <-keysEvents:
+				fmt.Println("\n**4.0**")
+				if event.Key == keyboard.KeyEsc {
+					fmt.Println("\n**4.1**")
+					os.Exit(1)
+				}
+				if event.Key == keyboard.KeySpace {
+					fmt.Println("\n**4.2**")
+					speaker.Lock()
+					ctrl.Paused = !ctrl.Paused
+					speaker.Unlock()
+				}
+			case isEnd := <-done:
+				fmt.Println("\n**4.3**")
+				fmt.Println(isEnd)
+				if isEnd {
+					fmt.Println("\n**4.4**")
+					break endPlay
+				}
+			default:
+				continue
 			}
 		}
 
 	} else {
 		return errors.New("Hmm ... " + extension + " is not supported ")
 	}
-
+	return nil
 }
 
 func decodeMp3Composition(fileHandle *os.File) (beep.StreamSeekCloser, beep.Format, error) {
