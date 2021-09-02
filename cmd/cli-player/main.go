@@ -2,24 +2,27 @@ package main
 
 import (
 	"fmt"
+	"log"
+	"os"
+
 	"github.com/DavidGamba/go-getoptions"
 	"gitlab.com/aag031/cli_player/internal/common"
 	"gitlab.com/aag031/cli_player/internal/player"
-	"os"
 )
 
 type playMode int
 
 const (
-	fileMode= playMode(iota)
+	fileMode = playMode(iota)
 	folderMode
 	playListMode
 	unknownMode
 )
 
-const VERSION = "1.1.0"
+const VERSION = "1.2.0"
 
 func main() {
+	setupLogging()
 	fileName, mode := parseCommandLine()
 	if mode == fileMode {
 		fileError := common.CheckInputFile(fileName)
@@ -39,7 +42,14 @@ func main() {
 		errorPlayer := player.PlayPlayList(fileName)
 		common.CheckErrorPanic(errorPlayer)
 	}
+}
 
+func setupLogging() {
+	logFile, err := os.OpenFile("./player.log", os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
+	common.CheckErrorPanic(err)
+	defer logFile.Close()
+	log.SetOutput(logFile)
+	log.Println("Log started")
 }
 
 func parseCommandLine() (string, playMode) {
@@ -61,7 +71,7 @@ func parseCommandLine() (string, playMode) {
 		fmt.Printf("Version : " + VERSION)
 		os.Exit(1)
 	}
-	if err  != nil {
+	if err != nil {
 		fmt.Printf("ERROR %s\n\n", err)
 		fmt.Printf(opt.Help(getoptions.HelpSynopsis))
 		os.Exit(1)
@@ -71,7 +81,7 @@ func parseCommandLine() (string, playMode) {
 		fmt.Printf(opt.Help(getoptions.HelpSynopsis))
 		os.Exit(1)
 	}
-	if opt.Called("file") && opt.Called("dir") && opt.Called("plist"){
+	if opt.Called("file") && opt.Called("dir") && opt.Called("plist") {
 		fmt.Printf("ERROR %s\n\n", "fileName and folderName and playlis in the same time should not be passed")
 		fmt.Printf(opt.Help(getoptions.HelpSynopsis))
 		os.Exit(1)
