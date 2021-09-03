@@ -2,6 +2,7 @@ package player
 
 import (
 	"bufio"
+	"container/list"
 	"errors"
 	"fmt"
 	"os"
@@ -44,13 +45,10 @@ func PlayPlayList(playListName string) error {
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		fileName := scanner.Text()
-		fmt.Println("0 : " + fileName)
 		if strings.HasPrefix(fileName, COMMENT) {
-			fmt.Println("1 : " + fileName)
 			continue
 		}
 		PlayFile(fileName)
-		fmt.Println("2 : " + fileName)
 	}
 
 	if err := scanner.Err(); err != nil {
@@ -122,25 +120,19 @@ endPlay:
 	for {
 		select {
 		case event := <-keysEvents:
-			fmt.Println("\n**4.0**")
 			if event.Key == keyboard.KeyEsc {
-				fmt.Println("\n**4.1**")
 				os.Exit(1)
 			}
 			if event.Key == keyboard.KeySpace {
-				fmt.Println("\n**4.2**")
 				speaker.Lock()
-				fmt.Println("\n**4.2.1**")
 				fmt.Println(ctrl.Paused)
 				ctrl.Paused = !ctrl.Paused
 				fmt.Println(ctrl.Paused)
 				speaker.Unlock()
 			}
 		case isEnd := <-done:
-			fmt.Println("\n**4.3**")
 			fmt.Println(isEnd)
 			if isEnd {
-				fmt.Println("\n**4.4**")
 				break endPlay
 			}
 		default:
