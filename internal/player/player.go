@@ -37,9 +37,9 @@ func init() {
 	controlTable[".ogg"] = decodeOggComposition
 }
 
-func PlayPlayList(playListName string) error {
-	fmt.Println("Start Play Compositions from playlist : " + playListName)
-	file, err := os.Open(playListName)
+func loadPlayList(playListFileName string) (*list.List, error) {
+	playList := list.New()
+	file, err := os.Open(playListFileName)
 	common.CheckErrorPanic(err)
 	defer file.Close()
 	scanner := bufio.NewScanner(file)
@@ -48,17 +48,19 @@ func PlayPlayList(playListName string) error {
 		if strings.HasPrefix(fileName, COMMENT) {
 			continue
 		}
-		PlayFile(fileName)
+
+		playList.PushBack(fileName)
 	}
 
 	if err := scanner.Err(); err != nil {
 		fmt.Println(err)
-		return err
+		return nil, err
 	}
-	return nil
+	return playList, nil
 }
 
-func PlayFolder(folderName string) error {
+func loadFolderToPlayList(folderName string) (*list.List, error) {
+	playList := list.New()
 	fmt.Println("Start Play Compositions from folder : " + folderName)
 	err := filepath.Walk(folderName, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -69,13 +71,33 @@ func PlayFolder(folderName string) error {
 			fmt.Println("Start folder " + info.Name())
 			return nil
 		}
-		fmt.Printf("Play name: %s\n", path)
-		errFile := PlayFile(path)
-		common.CheckErrorNoPanic(errFile)
+
+		playList.PushBack(path)
 		return nil
 	})
 
 	common.CheckErrorPanic(err)
+	return playList, nil
+}
+
+func PlayPlayList(playListName string, isRandomMode bool) error {
+	fmt.Println("Start Play Compositions from playlist : " + playListName)
+	playList, error := loadPlayList(playListName)
+	common.CheckErrorPanic(error)
+	for e := playList.Front(); e != nil; e = e.Next() {
+		PlayFile(e.Value.(string))
+	}
+	return nil
+}
+
+func PlayFolder(folderName string, isRandomMode bool) error {
+	fmt.Println("Start Play Compositions from folder : " + folderName)
+	playList, err := loadFolderToPlayList(folderName)
+	common.CheckErrorPanic(err)
+	for e := playList.Front(); e != nil; e = e.Next() {
+		error := PlayFile(e.Value.(string))
+		common.CheckErrorNoPanic(error)
+	}
 	return nil
 }
 
