@@ -123,7 +123,6 @@ func playInternalPlayList(playList map[int]string, isRandomMode bool) error {
 	} else {
 		keyList = orderedPlayList(len(playList))
 	}
-	fmt.Println(keyList)
 	for _, key := range keyList {
 		PlayFile(playList[key])
 	}
