@@ -18,10 +18,10 @@ const (
 	unknownMode
 )
 
-const VERSION = "1.3.0"
+const VERSION = "1.2.1"
 
 func main() {
-	fileName, mode, isRandomMode := parseCommandLine()
+	fileName, mode := parseCommandLine()
 	if mode == fileMode {
 		fileError := common.CheckInputFile(fileName)
 		common.CheckErrorPanic(fileError)
@@ -31,18 +31,18 @@ func main() {
 	if mode == folderMode {
 		fileError := common.CheckInputFolder(fileName)
 		common.CheckErrorPanic(fileError)
-		errorPlayer := player.PlayFolder(fileName, isRandomMode)
+		errorPlayer := player.PlayFolder(fileName)
 		common.CheckErrorPanic(errorPlayer)
 	}
 	if mode == playListMode {
 		fileError := common.CheckInputFile(fileName)
 		common.CheckErrorPanic(fileError)
-		errorPlayer := player.PlayPlayList(fileName, isRandomMode)
+		errorPlayer := player.PlayPlayList(fileName)
 		common.CheckErrorPanic(errorPlayer)
 	}
 }
 
-func parseCommandLine() (string, playMode, bool) {
+func parseCommandLine() (string, playMode) {
 	var fileName string
 	var folderName string
 	var playListName string
@@ -52,7 +52,6 @@ func parseCommandLine() (string, playMode, bool) {
 	opt.StringVarOptional(&fileName, "file", "", opt.Description("Name of file with composition for playing"), opt.Alias("f"))
 	opt.StringVarOptional(&folderName, "dir", "", opt.Description("Name of folder with compositions for playing"), opt.Alias("d"))
 	opt.StringVarOptional(&playListName, "plist", "", opt.Description("Name of file with playlist for playing"), opt.Alias("l"))
-	opt.Bool("random", false, opt.Description("Random mode of playing or not"), opt.Alias("r"))
 	_, err := opt.Parse(os.Args[1:])
 	if opt.Called("help") {
 		fmt.Printf(opt.Help())
@@ -73,43 +72,18 @@ func parseCommandLine() (string, playMode, bool) {
 		os.Exit(1)
 	}
 	if opt.Called("file") && opt.Called("dir") && opt.Called("plist") {
-		fmt.Printf("ERROR %s\n\n", "fileName and folderName and playlist in the same time should not be passed")
+		fmt.Printf("ERROR %s\n\n", "fileName and folderName and playlis in the same time should not be passed")
 		fmt.Printf(opt.Help(getoptions.HelpSynopsis))
 		os.Exit(1)
-	}
-	if opt.Called("file") && opt.Called("dir") {
-		fmt.Printf("ERROR %s\n\n", "fileName and folderName in the same time should not be passed")
-		fmt.Printf(opt.Help(getoptions.HelpSynopsis))
-		os.Exit(1)
-	}
-	if opt.Called("file") && opt.Called("plist") {
-		fmt.Printf("ERROR %s\n\n", "fileName andplaylist in the same time should not be passed")
-		fmt.Printf(opt.Help(getoptions.HelpSynopsis))
-		os.Exit(1)
-	}
-	if opt.Called("dir") && opt.Called("plist") {
-		fmt.Printf("ERROR %s\n\n", "folderName and playlist in the same time should not be passed")
-		fmt.Printf(opt.Help(getoptions.HelpSynopsis))
-		os.Exit(1)
-	}
-	if opt.Called("random") && opt.Called("file") {
-		fmt.Printf("ERROR %s\n\n", "fileName and random option is not compatible")
-		fmt.Printf(opt.Help(getoptions.HelpSynopsis))
-		os.Exit(1)
-
-	}
-	var isRandomMode bool
-	if opt.Called("random") {
-		isRandomMode = true
 	}
 	if opt.Called("file") {
-		return fileName, fileMode, false
+		return fileName, fileMode
 	}
 	if opt.Called("dir") {
-		return folderName, folderMode, isRandomMode
+		return folderName, folderMode
 	}
 	if opt.Called("plist") {
-		return playListName, playListMode, isRandomMode
+		return playListName, playListMode
 	}
-	return "", unknownMode, false
+	return "", unknownMode
 }

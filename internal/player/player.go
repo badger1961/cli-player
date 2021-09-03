@@ -2,9 +2,9 @@ package player
 
 import (
 	"bufio"
+	"container/list"
 	"errors"
 	"fmt"
-	"math/rand"
 	"os"
 	"path/filepath"
 	"strings"
@@ -37,10 +37,9 @@ func init() {
 	controlTable[".ogg"] = decodeOggComposition
 }
 
-func loadPlayList(playListFileName string) (map[int]string, error) {
-	idx := 0
-	playList := make(map[int]string)
-	file, err := os.Open(playListFileName)
+func PlayPlayList(playListName string) error {
+	fmt.Println("Start Play Compositions from playlist : " + playListName)
+	file, err := os.Open(playListName)
 	common.CheckErrorPanic(err)
 	defer file.Close()
 	scanner := bufio.NewScanner(file)
@@ -49,21 +48,18 @@ func loadPlayList(playListFileName string) (map[int]string, error) {
 		if strings.HasPrefix(fileName, COMMENT) {
 			continue
 		}
-
-		playList[idx] = fileName
-		idx = idx + 1
+		PlayFile(fileName)
 	}
 
 	if err := scanner.Err(); err != nil {
 		fmt.Println(err)
-		return nil, err
+		return err
 	}
-	return playList, nil
+	return nil
 }
 
-func loadFolderToPlayList(folderName string) (map[int]string, error) {
-	idx := 0
-	playList := make(map[int]string)
+func PlayFolder(folderName string) error {
+	fmt.Println("Start Play Compositions from folder : " + folderName)
 	err := filepath.Walk(folderName, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			fmt.Println(err)
@@ -73,60 +69,13 @@ func loadFolderToPlayList(folderName string) (map[int]string, error) {
 			fmt.Println("Start folder " + info.Name())
 			return nil
 		}
-		playList[idx] = path
-		idx = idx + 1
+		fmt.Printf("Play name: %s\n", path)
+		errFile := PlayFile(path)
+		common.CheckErrorNoPanic(errFile)
 		return nil
 	})
 
 	common.CheckErrorPanic(err)
-	return playList, nil
-}
-
-func randomizePlayList(size int) []int {
-	keyList := make([]int, 0, size)
-	rand.Seed(time.Now().UnixNano())
-	for i := 0; i < size; i++ {
-		next := rand.Intn(size)
-		keyList = append(keyList, next)
-	}
-	return keyList
-}
-
-func orderedPlayList(size int) []int {
-	keyList := make([]int, 0, size)
-	for i := 0; i < size; i++ {
-		keyList = append(keyList, i)
-	}
-	return keyList
-}
-
-func PlayPlayList(playListName string, isRandomMode bool) error {
-	fmt.Println("Start Play Compositions from playlist : " + playListName)
-	playList, error := loadPlayList(playListName)
-	common.CheckErrorPanic(error)
-	playInternalPlayList(playList, isRandomMode)
-	return nil
-}
-
-func PlayFolder(folderName string, isRandomMode bool) error {
-	fmt.Println("Start Play Compositions from folder : " + folderName)
-	playList, err := loadFolderToPlayList(folderName)
-	common.CheckErrorPanic(err)
-	playInternalPlayList(playList, isRandomMode)
-	return nil
-}
-
-func playInternalPlayList(playList map[int]string, isRandomMode bool) error {
-	var keyList []int
-	if isRandomMode {
-		keyList = randomizePlayList(len(playList))
-	} else {
-		keyList = orderedPlayList(len(playList))
-	}
-	fmt.Println(keyList)
-	for _, key := range keyList {
-		PlayFile(playList[key])
-	}
 	return nil
 }
 
@@ -147,7 +96,7 @@ func PlayFile(fileName string) error {
 	common.CheckErrorPanic(error)
 	defer streamHandler.Close()
 	size := format.SampleRate.D(streamHandler.Len())
-	fmt.Printf("Start Play Composition : %v duration : %v\n", fileName, size.Round(time.Second))
+	fmt.Printf("Start Play Composition : %v duration : %v", fileName, size.Round(time.Second))
 	speaker.Init(format.SampleRate, format.SampleRate.N(time.Second/30))
 	ctrl := &beep.Ctrl{Streamer: beep.Loop(1, streamHandler)}
 	ctrl.Paused = false
@@ -176,10 +125,13 @@ endPlay:
 			}
 			if event.Key == keyboard.KeySpace {
 				speaker.Lock()
+				fmt.Println(ctrl.Paused)
 				ctrl.Paused = !ctrl.Paused
+				fmt.Println(ctrl.Paused)
 				speaker.Unlock()
 			}
 		case isEnd := <-done:
+			fmt.Println(isEnd)
 			if isEnd {
 				break endPlay
 			}
