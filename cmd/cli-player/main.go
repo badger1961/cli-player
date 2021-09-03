@@ -73,9 +73,30 @@ func parseCommandLine() (string, playMode, bool) {
 		os.Exit(1)
 	}
 	if opt.Called("file") && opt.Called("dir") && opt.Called("plist") {
-		fmt.Printf("ERROR %s\n\n", "fileName and folderName and playlis in the same time should not be passed")
+		fmt.Printf("ERROR %s\n\n", "fileName and folderName and playlist in the same time should not be passed")
 		fmt.Printf(opt.Help(getoptions.HelpSynopsis))
 		os.Exit(1)
+	}
+	if opt.Called("file") && opt.Called("dir") {
+		fmt.Printf("ERROR %s\n\n", "fileName and folderName in the same time should not be passed")
+		fmt.Printf(opt.Help(getoptions.HelpSynopsis))
+		os.Exit(1)
+	}
+	if opt.Called("file") && opt.Called("plist") {
+		fmt.Printf("ERROR %s\n\n", "fileName andplaylist in the same time should not be passed")
+		fmt.Printf(opt.Help(getoptions.HelpSynopsis))
+		os.Exit(1)
+	}
+	if opt.Called("dir") && opt.Called("plist") {
+		fmt.Printf("ERROR %s\n\n", "folderName and playlist in the same time should not be passed")
+		fmt.Printf(opt.Help(getoptions.HelpSynopsis))
+		os.Exit(1)
+	}
+	if opt.Called("random") && opt.Called("file") {
+		fmt.Printf("ERROR %s\n\n", "fileName and random option is not compatible")
+		fmt.Printf(opt.Help(getoptions.HelpSynopsis))
+		os.Exit(1)
+
 	}
 	var isRandomMode bool
 	if opt.Called("random") {
