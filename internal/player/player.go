@@ -5,6 +5,7 @@ import (
 	"container/list"
 	"errors"
 	"fmt"
+	"math/rand"
 	"os"
 	"path/filepath"
 	"strings"
@@ -37,8 +38,9 @@ func init() {
 	controlTable[".ogg"] = decodeOggComposition
 }
 
-func loadPlayList(playListFileName string) (*list.List, error) {
-	playList := list.New()
+func loadPlayList(playListFileName string) (map[int]string, error) {
+	idx := 0
+	playList := make(map[int]string)
 	file, err := os.Open(playListFileName)
 	common.CheckErrorPanic(err)
 	defer file.Close()
@@ -49,7 +51,8 @@ func loadPlayList(playListFileName string) (*list.List, error) {
 			continue
 		}
 
-		playList.PushBack(fileName)
+		playList[idx] = fileName
+		idx = idx + 1
 	}
 
 	if err := scanner.Err(); err != nil {
@@ -80,12 +83,31 @@ func loadFolderToPlayList(folderName string) (*list.List, error) {
 	return playList, nil
 }
 
+func randomizePlayList(playList map[int]string) []int {
+	keyList := make([]int, len(playList))
+	for key := range playList {
+		keyList = append(keyList, key)
+	}
+	rand.Seed(time.Now().UnixNano())
+	rand.Shuffle(len(keyList), func(i, j int) { keyList[i], keyList[j] = keyList[j], keyList[i] })
+	return keyList
+
+}
+
 func PlayPlayList(playListName string, isRandomMode bool) error {
 	fmt.Println("Start Play Compositions from playlist : " + playListName)
 	playList, error := loadPlayList(playListName)
 	common.CheckErrorPanic(error)
-	for e := playList.Front(); e != nil; e = e.Next() {
-		PlayFile(e.Value.(string))
+	var keyList []int
+	if !isRandomMode {
+		keyList = randomizePlayList(playList)
+		for key := range keyList {
+			PlayFile(playList[key])
+		}
+	} else {
+		for _, fileName := range playList {
+			PlayFile(fileName)
+		}
 	}
 	return nil
 }
