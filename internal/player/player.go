@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cheggaaa/pb/v3"
 	"github.com/eiannone/keyboard"
 	"github.com/faiface/beep"
 
@@ -166,6 +167,8 @@ func PlayFile(fileName string) error {
 	if err != nil {
 		panic(err)
 	}
+	seconds := time.Tick(time.Second)
+	bar := pb.StartNew(streamHandler.Position())
 endPlay:
 	for {
 		select {
@@ -178,6 +181,11 @@ endPlay:
 				ctrl.Paused = !ctrl.Paused
 				speaker.Unlock()
 			}
+			if event.Key == keyboard.KeyArrowRight {
+				break endPlay
+			}
+		case tick := <-seconds:
+			bar.Add(tick.Second())
 		case isEnd := <-done:
 			if isEnd {
 				break endPlay

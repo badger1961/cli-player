@@ -31,3 +31,9 @@ OPTIONS:
 
 Comment is marked by #
 
+Commands:
+
+Press Esc - complete execution
+Press Space - pause
+Press ArrowRight - play next in composition
+
