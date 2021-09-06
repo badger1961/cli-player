@@ -18,7 +18,7 @@ const (
 	unknownMode
 )
 
-const VERSION = "1.3.0"
+const VERSION = "1.4.0"
 
 func main() {
 	fileName, mode, isRandomMode := parseCommandLine()

@@ -10,7 +10,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cheggaaa/pb/v3"
 	"github.com/eiannone/keyboard"
 	"github.com/faiface/beep"
 
@@ -23,7 +22,8 @@ import (
 )
 
 const (
-	COMMENT = "#"
+	COMMENT      = "#"
+	NOTIFICATION = "\rStart Play Composition : %v duration : %v:%v"
 )
 
 type TDecodeFileFunc func(*os.File) (beep.StreamSeekCloser, beep.Format, error)
@@ -147,7 +147,8 @@ func PlayFile(fileName string) error {
 	common.CheckErrorPanic(error)
 	defer streamHandler.Close()
 	size := format.SampleRate.D(streamHandler.Len())
-	fmt.Printf("Start Play Composition : %v duration : %v\n", fileName, size.Round(time.Second))
+	fmt.Println()
+	fmt.Printf(NOTIFICATION, fileName, size.Round(time.Second), 0)
 	speaker.Init(format.SampleRate, format.SampleRate.N(time.Second/30))
 	ctrl := &beep.Ctrl{Streamer: beep.Loop(1, streamHandler)}
 	ctrl.Paused = false
@@ -168,7 +169,6 @@ func PlayFile(fileName string) error {
 		panic(err)
 	}
 	seconds := time.Tick(time.Second)
-	bar := pb.StartNew(streamHandler.Position())
 endPlay:
 	for {
 		select {
@@ -184,12 +184,14 @@ endPlay:
 			if event.Key == keyboard.KeyArrowRight {
 				break endPlay
 			}
-		case tick := <-seconds:
-			bar.Add(tick.Second())
+		case _ = <-seconds:
+			pos := format.SampleRate.D(streamHandler.Position())
+			fmt.Printf(NOTIFICATION, fileName, size.Round(time.Second), pos.Round(time.Second))
 		case isEnd := <-done:
 			if isEnd {
 				break endPlay
 			}
+			fmt.Println()
 		default:
 			continue
 		}
