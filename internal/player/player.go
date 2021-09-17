@@ -83,14 +83,15 @@ func loadFolderToPlayList(folderName string) (map[int]string, error) {
 	return playList, nil
 }
 
-func randomizePlayList(size int) []int {
-	keyList := make([]int, 0, size)
+func randomizePlayList(playList map[int]string) []int {
+	size := len(playList)
 	rand.Seed(time.Now().UnixNano())
-	for i := 0; i < size; i++ {
-		next := rand.Intn(size)
-		keyList = append(keyList, next)
+	var keysList []int
+	for k := range playList {
+		keysList = append(keysList, k)
 	}
-	return keyList
+	rand.Shuffle(size, func(i, j int) { keysList[i], keysList[j] = keysList[j], keysList[i] })
+	return keysList
 }
 
 func orderedPlayList(size int) []int {
@@ -120,7 +121,7 @@ func PlayFolder(folderName string, isRandomMode bool) error {
 func playInternalPlayList(playList map[int]string, isRandomMode bool) error {
 	var keyList []int
 	if isRandomMode {
-		keyList = randomizePlayList(len(playList))
+		keyList = randomizePlayList(playList)
 	} else {
 		keyList = orderedPlayList(len(playList))
 	}
